@@ -101,3 +101,55 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+
+  attach-flutter-artifact:
+    name: Attach Flutter/Dart release artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: packages/flutter
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze Dart package
+        run: dart analyze
+
+      - name: Run Dart tests
+        run: dart test
+
+      - name: Validate publishable package
+        run: dart pub publish --dry-run
+
+      - name: Build Flutter/Dart release artifact
+        id: release-artifact
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          package_name=$(sed -n 's/^name: *//p' pubspec.yaml | head -n 1)
+          version=$(sed -n 's/^version: *//p' pubspec.yaml | head -n 1)
+          artifact_name="${package_name}-dart-source-${version}.tar.gz"
+          (
+            cd ..
+            tar \
+              --exclude='./flutter/dist' \
+              --exclude='./flutter/.dart_tool' \
+              --exclude='./flutter/build' \
+              --exclude='./flutter/.packages' \
+              -czf "flutter/dist/${artifact_name}" \
+              flutter
+          )
+          echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Flutter/Dart artifact to the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "dist/${{ steps.release-artifact.outputs.artifact_name }}" --clobber

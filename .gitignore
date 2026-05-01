@@ -9,3 +9,7 @@ packages/python/*.egg-info/
 
 packages/typescript/dist/
 packages/typescript/node_modules/
+
+packages/flutter/.dart_tool/
+packages/flutter/dist/
+packages/flutter/pubspec.lock

@@ -1,0 +1,17 @@
+name: tbd_agents
+description: >-
+  Dart/Flutter SDK for TBD Agents — typed client, resource helpers,
+  SSE streaming, multipart upload, and binary download.
+version: 0.1.0
+homepage: https://github.com/naaico-tech/tbd-agents-sdk/tree/main/packages/flutter
+repository: https://github.com/naaico-tech/tbd-agents-sdk
+issue_tracker: https://github.com/naaico-tech/tbd-agents-sdk/issues
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  http: ">=1.1.0 <2.0.0"
+
+dev_dependencies:
+  test: ">=1.24.0 <2.0.0"

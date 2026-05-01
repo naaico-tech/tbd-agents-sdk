@@ -1,6 +1,6 @@
 # TBD Agents SDKs
 
-SDK workspace for integrating [TBD Agents](https://github.com/naaico-tech/tbd-agents) into Python and TypeScript applications with minimal setup.
+SDK workspace for integrating [TBD Agents](https://github.com/naaico-tech/tbd-agents) into Python, TypeScript, and Flutter applications with minimal setup.
 
 ## Packages
 
@@ -8,6 +8,7 @@ SDK workspace for integrating [TBD Agents](https://github.com/naaico-tech/tbd-ag
 | --- | --- | --- |
 | Python SDK | `packages/python` | Wheels and sdists attached to GitHub Releases |
 | TypeScript SDK | `packages/typescript` | GitHub Packages npm package: `@naaico-tech/typescript-sdk` |
+| Flutter SDK | `packages/flutter` | Dart source archive attached to GitHub Releases |
 
 ## What the SDKs cover
 
@@ -23,6 +24,7 @@ Both SDKs provide:
 
 - The TypeScript SDK is published to GitHub Packages under the `@naaico-tech` scope.
 - GitHub Packages does not provide a native Python package registry, so Python wheels and source distributions are attached to GitHub Releases instead.
+- GitHub does not provide a native Dart/pub package registry, so the Flutter SDK is attached to GitHub Releases as a Dart source archive.
 
 ## Python quick start
 
@@ -133,6 +135,48 @@ Local workspace development install:
 cd packages/typescript && npm install
 ```
 
+## Flutter quick start
+
+Published release artifact:
+
+1. Download the latest Dart source archive from [GitHub Releases](https://github.com/naaico-tech/tbd-agents-sdk/releases).
+2. Extract it and reference the package from your Flutter app using a local path or Git dependency.
+
+Local workspace path dependency:
+
+```yaml
+dependencies:
+  tbd_agents:
+    path: ../tbd-agents-sdk/packages/flutter
+```
+
+```dart
+import 'package:tbd_agents/tbd_agents.dart';
+
+Future<void> main() async {
+  final client = TbdAgentsClient(
+    baseUrl: 'http://localhost:8000',
+  );
+
+  final health = await client.health.get();
+  final workflows = await client.workflows.list();
+
+  print(health.status);
+  print(workflows.length);
+
+  client.close();
+}
+```
+
+If your deployment requires authentication, pass a token explicitly:
+
+```dart
+final authenticatedClient = TbdAgentsClient(
+  baseUrl: 'https://agents.example.com',
+  token: 'YOUR_TBD_AGENTS_TOKEN',
+);
+```
+
 ## Workspace commands
 
 ```bash
@@ -143,6 +187,6 @@ make clean
 ## Notes
 
 - The upstream API serves `/health` outside `/api`; both clients handle that automatically.
-- The upstream API can operate without an `Authorization` header; both SDKs only send one when a token is configured.
+- The upstream API can operate without an `Authorization` header; all SDKs only send one when a token is configured.
 - Workflow run state comes from task execution and stream events, not the workflow's persisted `active`/`inactive` flag.
 - The TypeScript package targets runtimes with `fetch`, `FormData`, `Blob`, and web streams support.
