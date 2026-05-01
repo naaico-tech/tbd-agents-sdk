@@ -38,6 +38,118 @@ describe('TbdAgentsClient', () => {
     expect(init?.body).toBe(JSON.stringify({ prompt: 'hello' }));
   });
 
+  it('builds API requests without bearer auth when no token is configured', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    });
+
+    const client = new TbdAgentsClient({
+      baseUrl: 'https://example.com/',
+      fetch: fetchMock,
+      headers: {
+        'x-sdk': 'typescript',
+      },
+    });
+
+    await client.workflows.sendPrompt('wf_123', {
+      prompt: 'hello',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [input, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(input)).toBe('https://example.com/api/workflows/wf_123/prompt');
+
+    const headers = new Headers(init?.headers);
+    expect(init?.method).toBe('POST');
+    expect(headers.has('authorization')).toBe(false);
+    expect(headers.get('content-type')).toBe('application/json');
+    expect(headers.get('x-sdk')).toBe('typescript');
+    expect(init?.body).toBe(JSON.stringify({ prompt: 'hello' }));
+  });
+
+  it('ignores configured authorization headers when no token is provided', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      return new Response(JSON.stringify({ status: 'ok' }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    });
+
+    const client = new TbdAgentsClient({
+      baseUrl: 'https://example.com/',
+      fetch: fetchMock,
+      headers: {
+        authorization: 'Bearer should-not-be-sent',
+        'x-sdk': 'typescript',
+      },
+    });
+
+    await client.health.check();
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const headers = new Headers(init?.headers);
+    expect(headers.has('authorization')).toBe(false);
+    expect(headers.get('x-sdk')).toBe('typescript');
+  });
+
+  it('omits bearer auth when the configured token resolves to an empty value', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    });
+
+    const client = new TbdAgentsClient({
+      baseUrl: 'https://example.com/',
+      token: async () => '',
+      fetch: fetchMock,
+    });
+
+    await client.workflows.sendPrompt('wf_123', {
+      prompt: 'hello',
+    });
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const headers = new Headers(init?.headers);
+    expect(headers.has('authorization')).toBe(false);
+  });
+
+  it('trims bearer auth token values before sending them', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    });
+
+    const client = new TbdAgentsClient({
+      baseUrl: 'https://example.com/',
+      token: '  secret-token  ',
+      fetch: fetchMock,
+    });
+
+    await client.workflows.sendPrompt('wf_123', {
+      prompt: 'hello',
+    });
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const headers = new Headers(init?.headers);
+    expect(headers.get('authorization')).toBe('Bearer secret-token');
+  });
+
   it('routes health checks outside the /api base', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       return new Response(JSON.stringify({ status: 'ok' }), {

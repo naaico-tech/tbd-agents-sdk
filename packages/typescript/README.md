@@ -20,7 +20,6 @@ import { TbdAgentsClient } from "@naaico-tech/typescript-sdk";
 
 const client = new TbdAgentsClient({
   baseUrl: "http://localhost:8000",
-  token: process.env.GITHUB_TOKEN!,
 });
 
 const health = await client.health.check();
@@ -41,6 +40,15 @@ for await (const event of client.workflows.stream(workflow.id)) {
 console.log(health.status);
 ```
 
+If your deployment requires authentication, pass a token when creating the client:
+
+```ts
+const authenticatedClient = new TbdAgentsClient({
+  baseUrl: "https://agents.example.com",
+  token: process.env.TBD_AGENTS_TOKEN,
+});
+```
+
 ## Install from the workspace
 
 ```bash
@@ -50,7 +58,7 @@ cd packages/typescript && npm install
 Highlights:
 
 - `/api` aware client with `/health` handled outside the API base
-- bearer token authentication
+- optional bearer token authentication
 - typed resource helpers for common TBD Agents routes
 - workflow prompt helpers, polling, and SSE streaming
 - multipart knowledge item upload and binary download helpers

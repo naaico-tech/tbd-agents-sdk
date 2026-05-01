@@ -29,22 +29,28 @@ class TbdAgentsClient:
         self,
         *,
         base_url: str,
-        token: str,
+        token: str | None = None,
         timeout: float | httpx.Timeout = 30.0,
         default_headers: Mapping[str, str] | None = None,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
-        if not token or not token.strip():
-            raise ValueError("token must be provided explicitly")
-
         self.base_url, self.api_base_url = normalize_base_urls(base_url)
         headers = {
             "Accept": "application/json",
-            "Authorization": f"Bearer {token}",
             "User-Agent": USER_AGENT,
         }
         if default_headers:
-            headers.update(default_headers)
+            headers.update(
+                {
+                    key: value
+                    for key, value in default_headers.items()
+                    if key.lower() != "authorization"
+                }
+            )
+
+        normalized_token = token.strip() if token else None
+        if normalized_token:
+            headers["Authorization"] = f"Bearer {normalized_token}"
 
         self._client = httpx.Client(
             timeout=timeout,
@@ -150,4 +156,3 @@ class TbdAgentsClient:
                 yield response
         except httpx.HTTPError as exc:
             raise TransportError(str(exc), cause=exc) from exc
-

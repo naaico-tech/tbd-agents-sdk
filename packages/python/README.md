@@ -24,7 +24,6 @@ from tbd_agents import TbdAgentsClient, WorkflowCreate
 
 with TbdAgentsClient(
     base_url="http://localhost:8000",
-    token="YOUR_GITHUB_TOKEN",
 ) as client:
     health = client.health.get()
     agents = client.agents.list()
@@ -48,8 +47,19 @@ with TbdAgentsClient(
 Highlights:
 
 - `/api` aware client with `/health` handled outside the API base
-- bearer token authentication
+- optional bearer token authentication for secured deployments
 - typed resource helpers for common TBD Agents routes
 - workflow prompt helpers, polling, and SSE streaming
 - multipart knowledge item upload and binary download helpers
 - low-level request escape hatch for advanced routes
+
+For deployments that require authentication, pass a token explicitly:
+
+```python
+from tbd_agents import TbdAgentsClient
+
+client = TbdAgentsClient(
+    base_url="https://agents.example.com",
+    token="YOUR_GITHUB_TOKEN",
+)
+```

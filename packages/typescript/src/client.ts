@@ -14,7 +14,8 @@ import type {
   ResourceRecord,
 } from './types.js';
 
-export type TokenProvider = string | (() => string | Promise<string>);
+export type TokenValue = string | undefined;
+export type TokenProvider = TokenValue | (() => TokenValue | Promise<TokenValue>);
 export type ResponseType = 'auto' | 'arrayBuffer' | 'blob' | 'json' | 'raw' | 'text' | 'void';
 
 export interface RequestOptions<TBody = unknown> {
@@ -31,10 +32,15 @@ export interface RequestOptions<TBody = unknown> {
 
 export interface TbdAgentsClientConfig {
   baseUrl: string;
-  token: TokenProvider;
+  token?: TokenProvider;
   fetch?: FetchLike;
   timeoutMs?: number;
   headers?: RequestHeaders;
+}
+
+function normalizeToken(token?: string): string | undefined {
+  const trimmed = token?.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 function normalizeBaseUrl(baseUrl: string): string {
@@ -202,15 +208,11 @@ export class TbdAgentsClient {
   readonly models: CollectionResource<ResourceRecord>;
 
   private readonly fetchImpl: FetchLike;
-  private readonly tokenProvider: TokenProvider;
+  private readonly tokenProvider?: TokenProvider;
 
   constructor(config: TbdAgentsClientConfig) {
     if (!config.baseUrl) {
       throw new Error('baseUrl is required');
-    }
-
-    if (!config.token) {
-      throw new Error('token is required');
     }
 
     if (!config.fetch && typeof fetch === 'undefined') {
@@ -219,7 +221,9 @@ export class TbdAgentsClient {
 
     this.baseUrl = normalizeBaseUrl(config.baseUrl);
     this.timeoutMs = config.timeoutMs ?? 30_000;
-    this.defaultHeaders = config.headers ?? {};
+    this.defaultHeaders = Object.fromEntries(
+      Object.entries(config.headers ?? {}).filter(([key]) => key.toLowerCase() !== 'authorization'),
+    );
     this.fetchImpl = config.fetch ?? fetch;
     this.tokenProvider = config.token;
 
@@ -253,7 +257,9 @@ export class TbdAgentsClient {
       }
     }
 
-    headers.set('authorization', `Bearer ${token}`);
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`);
+    }
     headers.set('accept', headers.get('accept') ?? 'application/json');
 
     if (options.headers) {
@@ -346,15 +352,15 @@ export class TbdAgentsClient {
     return this.request<Response>({ ...options, responseType: 'raw' });
   }
 
-  private async resolveToken(): Promise<string> {
+  private async resolveToken(): Promise<string | undefined> {
+    if (!this.tokenProvider) {
+      return undefined;
+    }
+
     const token = typeof this.tokenProvider === 'function'
       ? await this.tokenProvider()
       : this.tokenProvider;
 
-    if (!token) {
-      throw new Error('Resolved token is empty');
-    }
-
-    return token;
+    return normalizeToken(token);
   }
 }

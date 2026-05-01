@@ -13,7 +13,7 @@ SDK workspace for integrating [TBD Agents](https://github.com/naaico-tech/tbd-ag
 
 Both SDKs provide:
 
-- bearer-token authentication and base URL handling
+- optional bearer-token authentication and base URL handling
 - first-class clients for `agents`, `skills`, `mcps`, `knowledge_sources`, `knowledge_items`, `workflows`, `tasks`, `providers`, `tokens`, `models`, and `health`
 - workflow prompt helpers, polling helpers, and SSE streaming support
 - multipart knowledge item uploads and binary downloads
@@ -48,7 +48,6 @@ from tbd_agents import TbdAgentsClient, WorkflowCreate
 
 with TbdAgentsClient(
     base_url="http://localhost:8000",
-    token="YOUR_GITHUB_TOKEN",
 ) as client:
     health = client.health.get()
     agents = client.agents.list()
@@ -70,6 +69,17 @@ with TbdAgentsClient(
     print(task.status)
 ```
 
+If your deployment requires authentication, pass a token explicitly:
+
+```python
+from tbd_agents import TbdAgentsClient
+
+client = TbdAgentsClient(
+    base_url="https://agents.example.com",
+    token="YOUR_TBD_AGENTS_TOKEN",
+)
+```
+
 ## TypeScript quick start
 
 Published package from GitHub Packages:
@@ -88,7 +98,6 @@ import { TbdAgentsClient } from "@naaico-tech/typescript-sdk";
 
 const client = new TbdAgentsClient({
   baseUrl: "http://localhost:8000",
-  token: process.env.GITHUB_TOKEN!,
 });
 
 const health = await client.health.check();
@@ -109,6 +118,15 @@ for await (const event of client.workflows.stream(workflow.id)) {
 console.log(health.status);
 ```
 
+If your deployment requires authentication, pass a token explicitly:
+
+```ts
+const authenticatedClient = new TbdAgentsClient({
+  baseUrl: "https://agents.example.com",
+  token: process.env.TBD_AGENTS_TOKEN,
+});
+```
+
 Local workspace development install:
 
 ```bash
@@ -125,5 +143,6 @@ make clean
 ## Notes
 
 - The upstream API serves `/health` outside `/api`; both clients handle that automatically.
+- The upstream API can operate without an `Authorization` header; both SDKs only send one when a token is configured.
 - Workflow run state comes from task execution and stream events, not the workflow's persisted `active`/`inactive` flag.
 - The TypeScript package targets runtimes with `fetch`, `FormData`, `Blob`, and web streams support.
