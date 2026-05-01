@@ -1,0 +1,55 @@
+{
+  "name": "@naaico-tech/typescript-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for TBD Agents",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "tsup": "^8.3.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naaico-tech/tbd-agents-sdk.git",
+    "directory": "packages/typescript"
+  },
+  "homepage": "https://github.com/naaico-tech/tbd-agents-sdk/tree/main/packages/typescript#readme",
+  "bugs": {
+    "url": "https://github.com/naaico-tech/tbd-agents-sdk/issues"
+  },
+  "keywords": [
+    "tbd-agents",
+    "agents",
+    "sdk",
+    "typescript",
+    "github-packages"
+  ]
+}

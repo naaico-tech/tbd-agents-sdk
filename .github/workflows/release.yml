@@ -1,0 +1,103 @@
+name: Release SDK packages
+
+on:
+  release:
+    types:
+      - published
+
+concurrency:
+  group: release-${{ github.event.release.id }}
+  cancel-in-progress: false
+
+jobs:
+  publish-typescript:
+    name: Publish TypeScript package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: "@naaico-tech"
+          cache: npm
+          cache-dependency-path: packages/typescript/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check package
+        run: npm run typecheck
+
+      - name: Run TypeScript tests
+        run: npm test
+
+      - name: Build TypeScript package
+        run: npm run build
+
+      - name: Check whether package version already exists
+        id: package-version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@naaico-tech/typescript-sdk@${version}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish package to GitHub Packages
+        if: steps.package-version.outputs.already_published != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
+
+      - name: Skip package publish when version already exists
+        if: steps.package-version.outputs.already_published == 'true'
+        run: echo "Package @naaico-tech/typescript-sdk@${{ steps.package-version.outputs.version }} already exists in GitHub Packages; skipping publish."
+
+  attach-python-artifacts:
+    name: Attach Python release artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: packages/python
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/python/pyproject.toml
+
+      - name: Install build and test dependencies
+        run: python -m pip install --upgrade pip build ".[test]"
+
+      - name: Run Python tests
+        run: python -m pytest
+
+      - name: Build Python release artifacts
+        run: |
+          rm -rf dist
+          python -m build
+
+      - name: Upload Python artifacts to the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber

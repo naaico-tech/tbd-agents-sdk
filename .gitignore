@@ -1,0 +1,11 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+
+packages/python/dist/
+packages/python/*.egg-info/
+
+packages/typescript/dist/
+packages/typescript/node_modules/
