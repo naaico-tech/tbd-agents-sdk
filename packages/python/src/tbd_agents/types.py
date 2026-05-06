@@ -430,6 +430,7 @@ class WorkflowCreate(ApiModel):
     repo_token_name: str | None = None
     repository_ids: list[str] = Field(default_factory=list)
     repository_tags: list[str] = Field(default_factory=list)
+    webhook_url: str | None = None
 
 
 class WorkflowUpdate(ApiModel):
@@ -454,6 +455,7 @@ class WorkflowUpdate(ApiModel):
     repository_ids: list[str] | None = None
     repository_tags: list[str] | None = None
     status: WorkflowStatus | str | None = None
+    webhook_url: str | None = None
 
 
 class PromptRequest(ApiModel):
@@ -515,6 +517,7 @@ class Workflow(ApiModel):
     task_count: int = 0
     last_task_status: str | None = None
     last_task_at: datetime | None = None
+    webhook_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -540,6 +543,7 @@ class ExportedWorkflow(ApiModel):
     repo_token_name: str | None = None
     repository_ids: list[str] = Field(default_factory=list)
     repository_tags: list[str] = Field(default_factory=list)
+    webhook_url: str | None = None
 
 
 class WorkflowExportBundle(ApiModel):
@@ -614,4 +618,315 @@ class WorkflowStreamEvent(ApiModel):
 
 class DetailResponse(ApiModel):
     detail: str
+
+
+# ---------------------------------------------------------------------------
+# Guardrails
+# ---------------------------------------------------------------------------
+
+
+class GuardrailType(StringEnum):
+    PROMPT = "prompt"
+    REQUEST = "request"
+    OUTPUT = "output"
+
+
+class PromptGuardrailConfig(ApiModel):
+    forbidden_patterns: list[str] = Field(default_factory=list)
+    required_patterns: list[str] = Field(default_factory=list)
+    max_length: int | None = None
+    min_length: int | None = None
+
+
+class RequestGuardrailConfig(ApiModel):
+    json_schema: dict[str, Any] = Field(default_factory=dict)
+
+
+class OutputGuardrailConfig(ApiModel):
+    forbidden_patterns: list[str] = Field(default_factory=list)
+    required_patterns: list[str] = Field(default_factory=list)
+    max_length: int | None = None
+    pii_detection: bool = False
+    must_be_valid_json: bool = False
+
+
+class GuardrailCreate(ApiModel):
+    name: str
+    description: str = ""
+    guardrail_type: GuardrailType
+    tags: list[str] = Field(default_factory=list)
+    enabled: bool = True
+    prompt_config: PromptGuardrailConfig | None = None
+    request_config: RequestGuardrailConfig | None = None
+    output_config: OutputGuardrailConfig | None = None
+
+
+class GuardrailUpdate(ApiModel):
+    name: str | None = None
+    description: str | None = None
+    guardrail_type: GuardrailType | None = None
+    tags: list[str] | None = None
+    enabled: bool | None = None
+    prompt_config: PromptGuardrailConfig | None = None
+    request_config: RequestGuardrailConfig | None = None
+    output_config: OutputGuardrailConfig | None = None
+
+
+class Guardrail(ApiModel):
+    id: str
+    name: str
+    description: str = ""
+    guardrail_type: GuardrailType
+    tags: list[str] = Field(default_factory=list)
+    enabled: bool = True
+    prompt_config: PromptGuardrailConfig | None = None
+    request_config: RequestGuardrailConfig | None = None
+    output_config: OutputGuardrailConfig | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Memories
+# ---------------------------------------------------------------------------
+
+
+class MemoryScope(StringEnum):
+    SHORT_TERM = "short_term"
+    LONG_TERM = "long_term"
+    EPISODIC = "episodic"
+
+
+class MemoryCreate(ApiModel):
+    agent_id: str
+    scope: MemoryScope
+    key: str
+    value: str
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    ttl: datetime | None = None
+
+
+class MemoryUpdate(ApiModel):
+    scope: MemoryScope | None = None
+    key: str | None = None
+    value: str | None = None
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] | None = None
+    ttl: datetime | None = None
+
+
+class Memory(ApiModel):
+    id: str
+    agent_id: str
+    scope: MemoryScope
+    key: str
+    value: str
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    ttl: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class MemorySearchRequest(ApiModel):
+    agent_id: str
+    query: str
+    scope: MemoryScope | None = None
+    limit: int = 10
+
+
+# ---------------------------------------------------------------------------
+# Scheduled Agents
+# ---------------------------------------------------------------------------
+
+
+class ScheduleInterval(StringEnum):
+    MINUTES = "minutes"
+    HOURS = "hours"
+    DAYS = "days"
+    WEEKS = "weeks"
+
+
+class ScheduledAgentCreate(ApiModel):
+    name: str
+    workflow_id: str
+    prompt: str
+    interval_value: int
+    interval_unit: ScheduleInterval = ScheduleInterval.HOURS
+    start_at: datetime
+    end_at: datetime | None = None
+
+
+class ScheduledAgentUpdate(ApiModel):
+    name: str | None = None
+    prompt: str | None = None
+    interval_value: int | None = None
+    interval_unit: ScheduleInterval | None = None
+    start_at: datetime | None = None
+    end_at: datetime | None = None
+
+
+class ScheduledAgent(ApiModel):
+    id: str
+    name: str
+    workflow_id: str
+    prompt: str
+    interval_value: int
+    interval_unit: ScheduleInterval
+    start_at: datetime
+    end_at: datetime | None = None
+    enabled: bool = True
+    last_run_at: datetime | None = None
+    next_run_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Custom Tools
+# ---------------------------------------------------------------------------
+
+
+class CustomToolCreate(ApiModel):
+    name: str
+    description: str = ""
+    source_code: str
+    parameters_schema: dict[str, Any] = Field(default_factory=dict)
+    env_config: dict[str, str] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    is_enabled: bool = True
+
+
+class CustomToolUpdate(ApiModel):
+    name: str | None = None
+    description: str | None = None
+    source_code: str | None = None
+    parameters_schema: dict[str, Any] | None = None
+    env_config: dict[str, str] | None = None
+    tags: list[str] | None = None
+    is_enabled: bool | None = None
+
+
+class CustomTool(ApiModel):
+    id: str
+    name: str
+    description: str = ""
+    source_code: str
+    parameters_schema: dict[str, Any] = Field(default_factory=dict)
+    env_config: dict[str, str] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    is_enabled: bool = True
+    is_plugin: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+
+class CustomToolRunRequest(ApiModel):
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class CustomToolRunResponse(ApiModel):
+    tool_name: str
+    result: Any = None
+    success: bool
+    error: str | None = None
+
+
+class CustomToolValidateRequest(ApiModel):
+    source_code: str
+    name: str
+
+
+class CustomToolValidateResponse(ApiModel):
+    valid: bool
+    inferred_schema: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class EnvVarEntry(ApiModel):
+    env_var: str
+    current_token: str | None = None
+    template: str
+
+
+class EnvMappingTokenRef(ApiModel):
+    id: str
+    name: str
+    description: str = ""
+    masked_value: str
+
+
+class EnvMappingResponse(ApiModel):
+    tool_id: str
+    tool_name: str
+    env_vars: list[EnvVarEntry] = Field(default_factory=list)
+    available_tokens: list[EnvMappingTokenRef] = Field(default_factory=list)
+
+
+class EnvMappingUpdate(ApiModel):
+    env_var_mapping: dict[str, str] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Chat
+# ---------------------------------------------------------------------------
+
+
+class ChatRequest(ApiModel):
+    message: str
+    session_id: str | None = None
+
+
+class ChatMessageRecord(ApiModel):
+    id: str
+    role: str
+    content: str
+    usage: dict[str, Any] | None = None
+    created_at: datetime
+
+
+class ChatSessionResponse(ApiModel):
+    id: str
+    agent_id: str
+    title: str | None = None
+    message_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChatSessionDetail(ChatSessionResponse):
+    messages: list[ChatMessageRecord] = Field(default_factory=list)
+
+
+class ChatStartRequest(ApiModel):
+    agent_id: str
+
+
+class ChatStartResponse(ApiModel):
+    workflow_id: str
+    agent_name: str
+    agent_id: str
+
+
+# ---------------------------------------------------------------------------
+# Full export / import bundle
+# ---------------------------------------------------------------------------
+
+
+class FullExportBundle(ApiModel):
+    version: str = "1.0"
+    exported_at: datetime | None = None
+    resource_type: str = "full"
+    skills: list[ExportedSkill] = Field(default_factory=list)
+    agents: list[ExportedAgent] = Field(default_factory=list)
+    workflows: list[ExportedWorkflow] = Field(default_factory=list)
+    knowledge_sources: list[ExportedKnowledgeSource] = Field(default_factory=list)
+
+
+class BundleImportResult(ApiModel):
+    skills: ImportResult = Field(default_factory=ImportResult)
+    agents: ImportResult = Field(default_factory=ImportResult)
+    workflows: ImportResult = Field(default_factory=ImportResult)
+    knowledge_sources: ImportResult = Field(default_factory=ImportResult)
 

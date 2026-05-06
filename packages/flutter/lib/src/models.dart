@@ -184,6 +184,7 @@ class WorkflowCreate {
     this.repoTokenName,
     this.repositoryIds = const [],
     this.repositoryTags = const [],
+    this.webhookUrl,
   });
 
   final String agentId;
@@ -206,6 +207,7 @@ class WorkflowCreate {
   final String? repoTokenName;
   final List<String> repositoryIds;
   final List<String> repositoryTags;
+  final String? webhookUrl;
 
   Map<String, dynamic> toJson() => {
         'agent_id': agentId,
@@ -228,6 +230,7 @@ class WorkflowCreate {
         if (repoTokenName != null) 'repo_token_name': repoTokenName,
         'repository_ids': repositoryIds,
         'repository_tags': repositoryTags,
+        if (webhookUrl != null) 'webhook_url': webhookUrl,
       };
 }
 
@@ -254,6 +257,7 @@ class WorkflowUpdate {
     this.repositoryIds,
     this.repositoryTags,
     this.status,
+    this.webhookUrl,
   });
 
   final String? title;
@@ -277,6 +281,7 @@ class WorkflowUpdate {
   final List<String>? repositoryIds;
   final List<String>? repositoryTags;
   final String? status;
+  final String? webhookUrl;
 
   Map<String, dynamic> toJson() => {
         if (title != null) 'title': title,
@@ -300,6 +305,7 @@ class WorkflowUpdate {
         if (repositoryIds != null) 'repository_ids': repositoryIds,
         if (repositoryTags != null) 'repository_tags': repositoryTags,
         if (status != null) 'status': status,
+        if (webhookUrl != null) 'webhook_url': webhookUrl,
       };
 }
 
@@ -338,6 +344,7 @@ class Workflow {
     this.taskCount = 0,
     this.lastTaskStatus,
     this.lastTaskAt,
+    this.webhookUrl,
     this.extras = const {},
   });
 
@@ -381,6 +388,7 @@ class Workflow {
         taskCount: _int(json['task_count']),
         lastTaskStatus: _str(json['last_task_status']),
         lastTaskAt: _str(json['last_task_at']),
+        webhookUrl: _str(json['webhook_url']),
         extras: json,
       );
 
@@ -415,6 +423,7 @@ class Workflow {
   final int taskCount;
   final String? lastTaskStatus;
   final String? lastTaskAt;
+  final String? webhookUrl;
   final String createdAt;
   final String updatedAt;
 
@@ -740,3 +749,901 @@ class DetailResponse {
   final String detail;
   final Map<String, dynamic> extras;
 }
+
+// ---------------------------------------------------------------------------
+// Guardrails
+// ---------------------------------------------------------------------------
+
+class PromptGuardrailConfig {
+  const PromptGuardrailConfig({
+    this.forbiddenPatterns = const [],
+    this.requiredPatterns = const [],
+    this.maxLength,
+    this.minLength,
+  });
+
+  factory PromptGuardrailConfig.fromJson(Map<String, dynamic> json) =>
+      PromptGuardrailConfig(
+        forbiddenPatterns: _strList(json['forbidden_patterns']),
+        requiredPatterns: _strList(json['required_patterns']),
+        maxLength: json['max_length'] != null ? _int(json['max_length']) : null,
+        minLength: json['min_length'] != null ? _int(json['min_length']) : null,
+      );
+
+  final List<String> forbiddenPatterns;
+  final List<String> requiredPatterns;
+  final int? maxLength;
+  final int? minLength;
+
+  Map<String, dynamic> toJson() => {
+        'forbidden_patterns': forbiddenPatterns,
+        'required_patterns': requiredPatterns,
+        if (maxLength != null) 'max_length': maxLength,
+        if (minLength != null) 'min_length': minLength,
+      };
+}
+
+class OutputGuardrailConfig {
+  const OutputGuardrailConfig({
+    this.forbiddenPatterns = const [],
+    this.requiredPatterns = const [],
+    this.maxLength,
+    this.piiDetection = false,
+    this.mustBeValidJson = false,
+  });
+
+  factory OutputGuardrailConfig.fromJson(Map<String, dynamic> json) =>
+      OutputGuardrailConfig(
+        forbiddenPatterns: _strList(json['forbidden_patterns']),
+        requiredPatterns: _strList(json['required_patterns']),
+        maxLength: json['max_length'] != null ? _int(json['max_length']) : null,
+        piiDetection: _bool(json['pii_detection']),
+        mustBeValidJson: _bool(json['must_be_valid_json']),
+      );
+
+  final List<String> forbiddenPatterns;
+  final List<String> requiredPatterns;
+  final int? maxLength;
+  final bool piiDetection;
+  final bool mustBeValidJson;
+
+  Map<String, dynamic> toJson() => {
+        'forbidden_patterns': forbiddenPatterns,
+        'required_patterns': requiredPatterns,
+        if (maxLength != null) 'max_length': maxLength,
+        'pii_detection': piiDetection,
+        'must_be_valid_json': mustBeValidJson,
+      };
+}
+
+class GuardrailCreate {
+  const GuardrailCreate({
+    required this.name,
+    required this.guardrailType,
+    this.description = '',
+    this.tags = const [],
+    this.enabled = true,
+    this.promptConfig,
+    this.outputConfig,
+  });
+
+  final String name;
+  final String description;
+  final String guardrailType;
+  final List<String> tags;
+  final bool enabled;
+  final PromptGuardrailConfig? promptConfig;
+  final OutputGuardrailConfig? outputConfig;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'description': description,
+        'guardrail_type': guardrailType,
+        'tags': tags,
+        'enabled': enabled,
+        if (promptConfig != null) 'prompt_config': promptConfig!.toJson(),
+        if (outputConfig != null) 'output_config': outputConfig!.toJson(),
+      };
+}
+
+class GuardrailUpdate {
+  const GuardrailUpdate({
+    this.name,
+    this.description,
+    this.guardrailType,
+    this.tags,
+    this.enabled,
+    this.promptConfig,
+    this.outputConfig,
+  });
+
+  final String? name;
+  final String? description;
+  final String? guardrailType;
+  final List<String>? tags;
+  final bool? enabled;
+  final PromptGuardrailConfig? promptConfig;
+  final OutputGuardrailConfig? outputConfig;
+
+  Map<String, dynamic> toJson() => {
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (guardrailType != null) 'guardrail_type': guardrailType,
+        if (tags != null) 'tags': tags,
+        if (enabled != null) 'enabled': enabled,
+        if (promptConfig != null) 'prompt_config': promptConfig!.toJson(),
+        if (outputConfig != null) 'output_config': outputConfig!.toJson(),
+      };
+}
+
+class Guardrail {
+  const Guardrail({
+    required this.id,
+    required this.name,
+    required this.guardrailType,
+    required this.createdAt,
+    required this.updatedAt,
+    this.description = '',
+    this.tags = const [],
+    this.enabled = true,
+    this.promptConfig,
+    this.outputConfig,
+    this.extras = const {},
+  });
+
+  factory Guardrail.fromJson(Map<String, dynamic> json) => Guardrail(
+        id: _cast<String>(json['id'], ''),
+        name: _cast<String>(json['name'], ''),
+        guardrailType: _cast<String>(json['guardrail_type'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        updatedAt: _cast<String>(json['updated_at'], ''),
+        description: _cast<String>(json['description'], ''),
+        tags: _strList(json['tags']),
+        enabled: _bool(json['enabled'], fallback: true),
+        promptConfig: json['prompt_config'] is Map<String, dynamic>
+            ? PromptGuardrailConfig.fromJson(json['prompt_config'] as Map<String, dynamic>)
+            : null,
+        outputConfig: json['output_config'] is Map<String, dynamic>
+            ? OutputGuardrailConfig.fromJson(json['output_config'] as Map<String, dynamic>)
+            : null,
+        extras: json,
+      );
+
+  final String id;
+  final String name;
+  final String description;
+  final String guardrailType;
+  final List<String> tags;
+  final bool enabled;
+  final PromptGuardrailConfig? promptConfig;
+  final OutputGuardrailConfig? outputConfig;
+  final String createdAt;
+  final String updatedAt;
+  final Map<String, dynamic> extras;
+}
+
+// ---------------------------------------------------------------------------
+// Memories
+// ---------------------------------------------------------------------------
+
+class MemoryCreate {
+  const MemoryCreate({
+    required this.agentId,
+    required this.scope,
+    required this.key,
+    required this.value,
+    this.metadata = const {},
+    this.ttl,
+  });
+
+  final String agentId;
+  final String scope;
+  final String key;
+  final String value;
+  final Map<String, dynamic> metadata;
+  final String? ttl;
+
+  Map<String, dynamic> toJson() => {
+        'agent_id': agentId,
+        'scope': scope,
+        'key': key,
+        'value': value,
+        'metadata': metadata,
+        if (ttl != null) 'ttl': ttl,
+      };
+}
+
+class MemoryUpdate {
+  const MemoryUpdate({
+    this.scope,
+    this.key,
+    this.value,
+    this.metadata,
+    this.ttl,
+  });
+
+  final String? scope;
+  final String? key;
+  final String? value;
+  final Map<String, dynamic>? metadata;
+  final String? ttl;
+
+  Map<String, dynamic> toJson() => {
+        if (scope != null) 'scope': scope,
+        if (key != null) 'key': key,
+        if (value != null) 'value': value,
+        if (metadata != null) 'metadata': metadata,
+        if (ttl != null) 'ttl': ttl,
+      };
+}
+
+class Memory {
+  const Memory({
+    required this.id,
+    required this.agentId,
+    required this.scope,
+    required this.key,
+    required this.value,
+    required this.createdAt,
+    required this.updatedAt,
+    this.metadata = const {},
+    this.ttl,
+    this.extras = const {},
+  });
+
+  factory Memory.fromJson(Map<String, dynamic> json) => Memory(
+        id: _cast<String>(json['id'], ''),
+        agentId: _cast<String>(json['agent_id'], ''),
+        scope: _cast<String>(json['scope'], ''),
+        key: _cast<String>(json['key'], ''),
+        value: _cast<String>(json['value'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        updatedAt: _cast<String>(json['updated_at'], ''),
+        metadata: json['metadata'] is Map<String, dynamic>
+            ? json['metadata'] as Map<String, dynamic>
+            : const {},
+        ttl: _str(json['ttl']),
+        extras: json,
+      );
+
+  final String id;
+  final String agentId;
+  final String scope;
+  final String key;
+  final String value;
+  final Map<String, dynamic> metadata;
+  final String? ttl;
+  final String createdAt;
+  final String updatedAt;
+  final Map<String, dynamic> extras;
+}
+
+class MemorySearchRequest {
+  const MemorySearchRequest({
+    required this.agentId,
+    required this.query,
+    this.scope,
+    this.limit = 10,
+  });
+
+  final String agentId;
+  final String query;
+  final String? scope;
+  final int limit;
+
+  Map<String, dynamic> toJson() => {
+        'agent_id': agentId,
+        'query': query,
+        if (scope != null) 'scope': scope,
+        'limit': limit,
+      };
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled Agents
+// ---------------------------------------------------------------------------
+
+class ScheduledAgentCreate {
+  const ScheduledAgentCreate({
+    required this.name,
+    required this.workflowId,
+    required this.prompt,
+    required this.intervalValue,
+    required this.startAt,
+    this.intervalUnit = 'hours',
+    this.endAt,
+  });
+
+  final String name;
+  final String workflowId;
+  final String prompt;
+  final int intervalValue;
+  final String intervalUnit;
+  final String startAt;
+  final String? endAt;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'workflow_id': workflowId,
+        'prompt': prompt,
+        'interval_value': intervalValue,
+        'interval_unit': intervalUnit,
+        'start_at': startAt,
+        if (endAt != null) 'end_at': endAt,
+      };
+}
+
+class ScheduledAgentUpdate {
+  const ScheduledAgentUpdate({
+    this.name,
+    this.prompt,
+    this.intervalValue,
+    this.intervalUnit,
+    this.startAt,
+    this.endAt,
+  });
+
+  final String? name;
+  final String? prompt;
+  final int? intervalValue;
+  final String? intervalUnit;
+  final String? startAt;
+  final String? endAt;
+
+  Map<String, dynamic> toJson() => {
+        if (name != null) 'name': name,
+        if (prompt != null) 'prompt': prompt,
+        if (intervalValue != null) 'interval_value': intervalValue,
+        if (intervalUnit != null) 'interval_unit': intervalUnit,
+        if (startAt != null) 'start_at': startAt,
+        if (endAt != null) 'end_at': endAt,
+      };
+}
+
+class ScheduledAgent {
+  const ScheduledAgent({
+    required this.id,
+    required this.name,
+    required this.workflowId,
+    required this.prompt,
+    required this.intervalValue,
+    required this.intervalUnit,
+    required this.startAt,
+    required this.createdAt,
+    required this.updatedAt,
+    this.endAt,
+    this.enabled = true,
+    this.lastRunAt,
+    this.nextRunAt,
+    this.extras = const {},
+  });
+
+  factory ScheduledAgent.fromJson(Map<String, dynamic> json) => ScheduledAgent(
+        id: _cast<String>(json['id'], ''),
+        name: _cast<String>(json['name'], ''),
+        workflowId: _cast<String>(json['workflow_id'], ''),
+        prompt: _cast<String>(json['prompt'], ''),
+        intervalValue: _int(json['interval_value']),
+        intervalUnit: _cast<String>(json['interval_unit'], 'hours'),
+        startAt: _cast<String>(json['start_at'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        updatedAt: _cast<String>(json['updated_at'], ''),
+        endAt: _str(json['end_at']),
+        enabled: _bool(json['enabled'], fallback: true),
+        lastRunAt: _str(json['last_run_at']),
+        nextRunAt: _str(json['next_run_at']),
+        extras: json,
+      );
+
+  final String id;
+  final String name;
+  final String workflowId;
+  final String prompt;
+  final int intervalValue;
+  final String intervalUnit;
+  final String startAt;
+  final String? endAt;
+  final bool enabled;
+  final String? lastRunAt;
+  final String? nextRunAt;
+  final String createdAt;
+  final String updatedAt;
+  final Map<String, dynamic> extras;
+}
+
+// ---------------------------------------------------------------------------
+// Custom Tools
+// ---------------------------------------------------------------------------
+
+class CustomToolCreate {
+  const CustomToolCreate({
+    required this.name,
+    required this.sourceCode,
+    this.description = '',
+    this.parametersSchema = const {},
+    this.envConfig = const {},
+    this.tags = const [],
+    this.isEnabled = true,
+  });
+
+  final String name;
+  final String description;
+  final String sourceCode;
+  final Map<String, dynamic> parametersSchema;
+  final Map<String, String> envConfig;
+  final List<String> tags;
+  final bool isEnabled;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'description': description,
+        'source_code': sourceCode,
+        'parameters_schema': parametersSchema,
+        'env_config': envConfig,
+        'tags': tags,
+        'is_enabled': isEnabled,
+      };
+}
+
+class CustomToolUpdate {
+  const CustomToolUpdate({
+    this.name,
+    this.description,
+    this.sourceCode,
+    this.parametersSchema,
+    this.envConfig,
+    this.tags,
+    this.isEnabled,
+  });
+
+  final String? name;
+  final String? description;
+  final String? sourceCode;
+  final Map<String, dynamic>? parametersSchema;
+  final Map<String, String>? envConfig;
+  final List<String>? tags;
+  final bool? isEnabled;
+
+  Map<String, dynamic> toJson() => {
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (sourceCode != null) 'source_code': sourceCode,
+        if (parametersSchema != null) 'parameters_schema': parametersSchema,
+        if (envConfig != null) 'env_config': envConfig,
+        if (tags != null) 'tags': tags,
+        if (isEnabled != null) 'is_enabled': isEnabled,
+      };
+}
+
+class CustomTool {
+  const CustomTool({
+    required this.id,
+    required this.name,
+    required this.sourceCode,
+    required this.createdAt,
+    required this.updatedAt,
+    this.description = '',
+    this.parametersSchema = const {},
+    this.envConfig = const {},
+    this.tags = const [],
+    this.isEnabled = true,
+    this.isPlugin = false,
+    this.extras = const {},
+  });
+
+  factory CustomTool.fromJson(Map<String, dynamic> json) => CustomTool(
+        id: _cast<String>(json['id'], ''),
+        name: _cast<String>(json['name'], ''),
+        sourceCode: _cast<String>(json['source_code'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        updatedAt: _cast<String>(json['updated_at'], ''),
+        description: _cast<String>(json['description'], ''),
+        parametersSchema: json['parameters_schema'] is Map<String, dynamic>
+            ? json['parameters_schema'] as Map<String, dynamic>
+            : const {},
+        envConfig: json['env_config'] is Map
+            ? Map<String, String>.from(json['env_config'] as Map)
+            : const {},
+        tags: _strList(json['tags']),
+        isEnabled: _bool(json['is_enabled'], fallback: true),
+        isPlugin: _bool(json['is_plugin']),
+        extras: json,
+      );
+
+  final String id;
+  final String name;
+  final String description;
+  final String sourceCode;
+  final Map<String, dynamic> parametersSchema;
+  final Map<String, String> envConfig;
+  final List<String> tags;
+  final bool isEnabled;
+  final bool isPlugin;
+  final String createdAt;
+  final String updatedAt;
+  final Map<String, dynamic> extras;
+}
+
+class CustomToolRunRequest {
+  const CustomToolRunRequest({this.arguments = const {}});
+
+  final Map<String, dynamic> arguments;
+
+  Map<String, dynamic> toJson() => {'arguments': arguments};
+}
+
+class CustomToolRunResponse {
+  const CustomToolRunResponse({
+    required this.toolName,
+    required this.success,
+    this.result,
+    this.error,
+    this.extras = const {},
+  });
+
+  factory CustomToolRunResponse.fromJson(Map<String, dynamic> json) =>
+      CustomToolRunResponse(
+        toolName: _cast<String>(json['tool_name'], ''),
+        success: _bool(json['success']),
+        result: json['result'],
+        error: _str(json['error']),
+        extras: json,
+      );
+
+  final String toolName;
+  final dynamic result;
+  final bool success;
+  final String? error;
+  final Map<String, dynamic> extras;
+}
+
+class CustomToolValidateRequest {
+  const CustomToolValidateRequest({required this.sourceCode, required this.name});
+
+  final String sourceCode;
+  final String name;
+
+  Map<String, dynamic> toJson() => {'source_code': sourceCode, 'name': name};
+}
+
+class CustomToolValidateResponse {
+  const CustomToolValidateResponse({
+    required this.valid,
+    this.inferredSchema,
+    this.error,
+    this.extras = const {},
+  });
+
+  factory CustomToolValidateResponse.fromJson(Map<String, dynamic> json) =>
+      CustomToolValidateResponse(
+        valid: _bool(json['valid']),
+        inferredSchema: json['inferred_schema'] is Map<String, dynamic>
+            ? json['inferred_schema'] as Map<String, dynamic>
+            : null,
+        error: _str(json['error']),
+        extras: json,
+      );
+
+  final bool valid;
+  final Map<String, dynamic>? inferredSchema;
+  final String? error;
+  final Map<String, dynamic> extras;
+}
+
+class EnvVarEntry {
+  const EnvVarEntry({
+    required this.envVar,
+    required this.template,
+    this.currentToken,
+  });
+
+  factory EnvVarEntry.fromJson(Map<String, dynamic> json) => EnvVarEntry(
+        envVar: _cast<String>(json['env_var'], ''),
+        template: _cast<String>(json['template'], ''),
+        currentToken: _str(json['current_token']),
+      );
+
+  final String envVar;
+  final String? currentToken;
+  final String template;
+}
+
+class EnvMappingTokenRef {
+  const EnvMappingTokenRef({
+    required this.id,
+    required this.name,
+    required this.maskedValue,
+    this.description = '',
+  });
+
+  factory EnvMappingTokenRef.fromJson(Map<String, dynamic> json) =>
+      EnvMappingTokenRef(
+        id: _cast<String>(json['id'], ''),
+        name: _cast<String>(json['name'], ''),
+        maskedValue: _cast<String>(json['masked_value'], ''),
+        description: _cast<String>(json['description'], ''),
+      );
+
+  final String id;
+  final String name;
+  final String description;
+  final String maskedValue;
+}
+
+class EnvMappingResponse {
+  const EnvMappingResponse({
+    required this.toolId,
+    required this.toolName,
+    this.envVars = const [],
+    this.availableTokens = const [],
+    this.extras = const {},
+  });
+
+  factory EnvMappingResponse.fromJson(Map<String, dynamic> json) =>
+      EnvMappingResponse(
+        toolId: _cast<String>(json['tool_id'], ''),
+        toolName: _cast<String>(json['tool_name'], ''),
+        envVars: (json['env_vars'] is List)
+            ? (json['env_vars'] as List)
+                .whereType<Map<String, dynamic>>()
+                .map(EnvVarEntry.fromJson)
+                .toList()
+            : const [],
+        availableTokens: (json['available_tokens'] is List)
+            ? (json['available_tokens'] as List)
+                .whereType<Map<String, dynamic>>()
+                .map(EnvMappingTokenRef.fromJson)
+                .toList()
+            : const [],
+        extras: json,
+      );
+
+  final String toolId;
+  final String toolName;
+  final List<EnvVarEntry> envVars;
+  final List<EnvMappingTokenRef> availableTokens;
+  final Map<String, dynamic> extras;
+}
+
+class EnvMappingUpdate {
+  const EnvMappingUpdate({this.envVarMapping = const {}});
+
+  final Map<String, String> envVarMapping;
+
+  Map<String, dynamic> toJson() => {'env_var_mapping': envVarMapping};
+}
+
+// ---------------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------------
+
+class ChatRequest {
+  const ChatRequest({required this.message, this.sessionId});
+
+  final String message;
+  final String? sessionId;
+
+  Map<String, dynamic> toJson() => {
+        'message': message,
+        if (sessionId != null) 'session_id': sessionId,
+      };
+}
+
+class ChatMessageRecord {
+  const ChatMessageRecord({
+    required this.id,
+    required this.role,
+    required this.content,
+    required this.createdAt,
+    this.usage,
+    this.extras = const {},
+  });
+
+  factory ChatMessageRecord.fromJson(Map<String, dynamic> json) =>
+      ChatMessageRecord(
+        id: _cast<String>(json['id'], ''),
+        role: _cast<String>(json['role'], ''),
+        content: _cast<String>(json['content'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        usage: json['usage'] is Map<String, dynamic>
+            ? json['usage'] as Map<String, dynamic>
+            : null,
+        extras: json,
+      );
+
+  final String id;
+  final String role;
+  final String content;
+  final Map<String, dynamic>? usage;
+  final String createdAt;
+  final Map<String, dynamic> extras;
+}
+
+class ChatSessionResponse {
+  const ChatSessionResponse({
+    required this.id,
+    required this.agentId,
+    required this.createdAt,
+    required this.updatedAt,
+    this.title,
+    this.messageCount = 0,
+    this.extras = const {},
+  });
+
+  factory ChatSessionResponse.fromJson(Map<String, dynamic> json) =>
+      ChatSessionResponse(
+        id: _cast<String>(json['id'], ''),
+        agentId: _cast<String>(json['agent_id'], ''),
+        createdAt: _cast<String>(json['created_at'], ''),
+        updatedAt: _cast<String>(json['updated_at'], ''),
+        title: _str(json['title']),
+        messageCount: _int(json['message_count']),
+        extras: json,
+      );
+
+  final String id;
+  final String agentId;
+  final String? title;
+  final int messageCount;
+  final String createdAt;
+  final String updatedAt;
+  final Map<String, dynamic> extras;
+}
+
+class ChatSessionDetail extends ChatSessionResponse {
+  const ChatSessionDetail({
+    required super.id,
+    required super.agentId,
+    required super.createdAt,
+    required super.updatedAt,
+    super.title,
+    super.messageCount,
+    this.messages = const [],
+    super.extras,
+  });
+
+  factory ChatSessionDetail.fromJson(Map<String, dynamic> json) {
+    final base = ChatSessionResponse.fromJson(json);
+    return ChatSessionDetail(
+      id: base.id,
+      agentId: base.agentId,
+      createdAt: base.createdAt,
+      updatedAt: base.updatedAt,
+      title: base.title,
+      messageCount: base.messageCount,
+      messages: (json['messages'] is List)
+          ? (json['messages'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map(ChatMessageRecord.fromJson)
+              .toList()
+          : const [],
+      extras: json,
+    );
+  }
+
+  final List<ChatMessageRecord> messages;
+}
+
+class ChatStartRequest {
+  const ChatStartRequest({required this.agentId});
+
+  final String agentId;
+
+  Map<String, dynamic> toJson() => {'agent_id': agentId};
+}
+
+class ChatStartResponse {
+  const ChatStartResponse({
+    required this.workflowId,
+    required this.agentName,
+    required this.agentId,
+    this.extras = const {},
+  });
+
+  factory ChatStartResponse.fromJson(Map<String, dynamic> json) =>
+      ChatStartResponse(
+        workflowId: _cast<String>(json['workflow_id'], ''),
+        agentName: _cast<String>(json['agent_name'], ''),
+        agentId: _cast<String>(json['agent_id'], ''),
+        extras: json,
+      );
+
+  final String workflowId;
+  final String agentName;
+  final String agentId;
+  final Map<String, dynamic> extras;
+}
+
+// ---------------------------------------------------------------------------
+// Full export / import bundle
+// ---------------------------------------------------------------------------
+
+class FullExportBundle {
+  const FullExportBundle({
+    this.version = '1.0',
+    this.exportedAt,
+    this.resourceType = 'full',
+    this.skills = const [],
+    this.agents = const [],
+    this.workflows = const [],
+    this.knowledgeSources = const [],
+    this.extras = const {},
+  });
+
+  factory FullExportBundle.fromJson(Map<String, dynamic> json) =>
+      FullExportBundle(
+        version: _cast<String>(json['version'], '1.0'),
+        exportedAt: _str(json['exported_at']),
+        resourceType: _cast<String>(json['resource_type'], 'full'),
+        skills: json['skills'] is List
+            ? List<Map<String, dynamic>>.from(
+                (json['skills'] as List).whereType<Map<String, dynamic>>())
+            : const [],
+        agents: json['agents'] is List
+            ? List<Map<String, dynamic>>.from(
+                (json['agents'] as List).whereType<Map<String, dynamic>>())
+            : const [],
+        workflows: json['workflows'] is List
+            ? List<Map<String, dynamic>>.from(
+                (json['workflows'] as List).whereType<Map<String, dynamic>>())
+            : const [],
+        knowledgeSources: json['knowledge_sources'] is List
+            ? List<Map<String, dynamic>>.from(
+                (json['knowledge_sources'] as List).whereType<Map<String, dynamic>>())
+            : const [],
+        extras: json,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'version': version,
+        if (exportedAt != null) 'exported_at': exportedAt,
+        'resource_type': resourceType,
+        'skills': skills,
+        'agents': agents,
+        'workflows': workflows,
+        'knowledge_sources': knowledgeSources,
+      };
+
+  final String version;
+  final String? exportedAt;
+  final String resourceType;
+  final List<Map<String, dynamic>> skills;
+  final List<Map<String, dynamic>> agents;
+  final List<Map<String, dynamic>> workflows;
+  final List<Map<String, dynamic>> knowledgeSources;
+  final Map<String, dynamic> extras;
+}
+
+class BundleImportResult {
+  const BundleImportResult({
+    this.skills,
+    this.agents,
+    this.workflows,
+    this.knowledgeSources,
+    this.extras = const {},
+  });
+
+  factory BundleImportResult.fromJson(Map<String, dynamic> json) =>
+      BundleImportResult(
+        skills: json['skills'] is Map<String, dynamic>
+            ? ImportResult.fromJson(json['skills'] as Map<String, dynamic>)
+            : null,
+        agents: json['agents'] is Map<String, dynamic>
+            ? ImportResult.fromJson(json['agents'] as Map<String, dynamic>)
+            : null,
+        workflows: json['workflows'] is Map<String, dynamic>
+            ? ImportResult.fromJson(json['workflows'] as Map<String, dynamic>)
+            : null,
+        knowledgeSources: json['knowledge_sources'] is Map<String, dynamic>
+            ? ImportResult.fromJson(json['knowledge_sources'] as Map<String, dynamic>)
+            : null,
+        extras: json,
+      );
+
+  final ImportResult? skills;
+  final ImportResult? agents;
+  final ImportResult? workflows;
+  final ImportResult? knowledgeSources;
+  final Map<String, dynamic> extras;
+}
+

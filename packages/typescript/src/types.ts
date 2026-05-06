@@ -76,6 +76,7 @@ export interface Workflow extends ResourceRecord {
   task_count?: number;
   last_task_status?: string | null;
   last_task_at?: string | null;
+  webhook_url?: string | null;
 }
 
 export interface WorkflowCreateInput extends ResourceRecord {
@@ -97,6 +98,7 @@ export interface WorkflowCreateInput extends ResourceRecord {
   repo_url?: string | null;
   repo_branch?: string | null;
   repo_token_name?: string | null;
+  webhook_url?: string | null;
 }
 
 export interface WorkflowUpdateInput extends Partial<WorkflowCreateInput> {
@@ -253,3 +255,280 @@ export interface DownloadedKnowledgeItem {
   fileName?: string;
   response: Response;
 }
+
+// ---------------------------------------------------------------------------
+// Guardrails
+// ---------------------------------------------------------------------------
+
+export type GuardrailType = 'prompt' | 'request' | 'output' | string;
+
+export interface PromptGuardrailConfig extends ResourceRecord {
+  forbidden_patterns?: string[];
+  required_patterns?: string[];
+  max_length?: number | null;
+  min_length?: number | null;
+}
+
+export interface RequestGuardrailConfig extends ResourceRecord {
+  json_schema?: Record<string, unknown>;
+}
+
+export interface OutputGuardrailConfig extends ResourceRecord {
+  forbidden_patterns?: string[];
+  required_patterns?: string[];
+  max_length?: number | null;
+  pii_detection?: boolean;
+  must_be_valid_json?: boolean;
+}
+
+export interface Guardrail extends ResourceRecord {
+  id: string;
+  name: string;
+  description?: string;
+  guardrail_type: GuardrailType;
+  tags?: string[];
+  enabled?: boolean;
+  prompt_config?: PromptGuardrailConfig | null;
+  request_config?: RequestGuardrailConfig | null;
+  output_config?: OutputGuardrailConfig | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GuardrailCreateInput extends ResourceRecord {
+  name: string;
+  description?: string;
+  guardrail_type: GuardrailType;
+  tags?: string[];
+  enabled?: boolean;
+  prompt_config?: PromptGuardrailConfig | null;
+  request_config?: RequestGuardrailConfig | null;
+  output_config?: OutputGuardrailConfig | null;
+}
+
+export interface GuardrailUpdateInput extends Partial<GuardrailCreateInput> {}
+
+// ---------------------------------------------------------------------------
+// Memories
+// ---------------------------------------------------------------------------
+
+export type MemoryScope = 'short_term' | 'long_term' | 'episodic' | string;
+
+export interface Memory extends ResourceRecord {
+  id: string;
+  agent_id: string;
+  scope: MemoryScope;
+  key: string;
+  value: string;
+  embedding?: number[] | null;
+  metadata?: Record<string, unknown>;
+  ttl?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MemoryCreateInput extends ResourceRecord {
+  agent_id: string;
+  scope: MemoryScope;
+  key: string;
+  value: string;
+  embedding?: number[] | null;
+  metadata?: Record<string, unknown>;
+  ttl?: string | null;
+}
+
+export interface MemoryUpdateInput extends Partial<Omit<MemoryCreateInput, 'agent_id'>> {}
+
+export interface MemorySearchInput extends ResourceRecord {
+  agent_id: string;
+  query: string;
+  scope?: MemoryScope | null;
+  limit?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled Agents
+// ---------------------------------------------------------------------------
+
+export type ScheduleInterval = 'minutes' | 'hours' | 'days' | 'weeks' | string;
+
+export interface ScheduledAgent extends ResourceRecord {
+  id: string;
+  name: string;
+  workflow_id: string;
+  prompt: string;
+  interval_value: number;
+  interval_unit: ScheduleInterval;
+  start_at: string;
+  end_at?: string | null;
+  enabled?: boolean;
+  last_run_at?: string | null;
+  next_run_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScheduledAgentCreateInput extends ResourceRecord {
+  name: string;
+  workflow_id: string;
+  prompt: string;
+  interval_value: number;
+  interval_unit?: ScheduleInterval;
+  start_at: string;
+  end_at?: string | null;
+}
+
+export interface ScheduledAgentUpdateInput extends Partial<Omit<ScheduledAgentCreateInput, 'workflow_id'>> {}
+
+// ---------------------------------------------------------------------------
+// Custom Tools
+// ---------------------------------------------------------------------------
+
+export interface CustomTool extends ResourceRecord {
+  id: string;
+  name: string;
+  description?: string;
+  source_code: string;
+  parameters_schema?: Record<string, unknown>;
+  env_config?: Record<string, string>;
+  tags?: string[];
+  is_enabled?: boolean;
+  is_plugin?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomToolCreateInput extends ResourceRecord {
+  name: string;
+  description?: string;
+  source_code: string;
+  parameters_schema?: Record<string, unknown>;
+  env_config?: Record<string, string>;
+  tags?: string[];
+  is_enabled?: boolean;
+}
+
+export interface CustomToolUpdateInput extends Partial<CustomToolCreateInput> {}
+
+export interface CustomToolRunInput extends ResourceRecord {
+  arguments?: Record<string, unknown>;
+}
+
+export interface CustomToolRunResponse extends ResourceRecord {
+  tool_name: string;
+  result?: unknown;
+  success: boolean;
+  error?: string | null;
+}
+
+export interface CustomToolValidateInput extends ResourceRecord {
+  source_code: string;
+  name: string;
+}
+
+export interface CustomToolValidateResponse extends ResourceRecord {
+  valid: boolean;
+  inferred_schema?: Record<string, unknown> | null;
+  error?: string | null;
+}
+
+export interface EnvVarEntry extends ResourceRecord {
+  env_var: string;
+  current_token?: string | null;
+  template: string;
+}
+
+export interface EnvMappingTokenRef extends ResourceRecord {
+  id: string;
+  name: string;
+  description?: string;
+  masked_value: string;
+}
+
+export interface EnvMappingResponse extends ResourceRecord {
+  tool_id: string;
+  tool_name: string;
+  env_vars?: EnvVarEntry[];
+  available_tokens?: EnvMappingTokenRef[];
+}
+
+export interface EnvMappingUpdateInput extends ResourceRecord {
+  env_var_mapping: Record<string, string>;
+}
+
+export interface CustomToolUploadInput {
+  file: Blob | Uint8Array | ArrayBuffer;
+  fileName?: string;
+  name: string;
+  description?: string;
+  tags?: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------------
+
+export interface ChatInput extends ResourceRecord {
+  message: string;
+  session_id?: string | null;
+}
+
+export interface ChatMessageRecord extends ResourceRecord {
+  id: string;
+  role: string;
+  content: string;
+  usage?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface ChatSessionResponse extends ResourceRecord {
+  id: string;
+  agent_id: string;
+  title?: string | null;
+  message_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatSessionDetail extends ChatSessionResponse {
+  messages?: ChatMessageRecord[];
+}
+
+export interface ChatStartInput extends ResourceRecord {
+  agent_id: string;
+}
+
+export interface ChatStartResponse extends ResourceRecord {
+  workflow_id: string;
+  agent_name: string;
+  agent_id: string;
+}
+
+// ---------------------------------------------------------------------------
+// Export / Import
+// ---------------------------------------------------------------------------
+
+export interface FullExportBundle extends ResourceRecord {
+  version?: string;
+  exported_at?: string | null;
+  resource_type?: string;
+  skills?: ResourceRecord[];
+  agents?: ResourceRecord[];
+  workflows?: ResourceRecord[];
+  knowledge_sources?: ResourceRecord[];
+}
+
+export interface ImportResult extends ResourceRecord {
+  created?: number;
+  updated?: number;
+  skipped?: number;
+  errors?: string[];
+}
+
+export interface BundleImportResult extends ResourceRecord {
+  skills?: ImportResult;
+  agents?: ImportResult;
+  workflows?: ImportResult;
+  knowledge_sources?: ImportResult;
+}
+

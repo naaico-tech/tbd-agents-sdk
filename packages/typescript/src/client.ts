@@ -1,8 +1,14 @@
 import { ApiError } from './errors.js';
 import { HealthResource } from './resources/health.js';
 import { CollectionResource } from './resources/generic.js';
+import { ChatResource } from './resources/chat.js';
+import { CustomToolsResource } from './resources/custom-tools.js';
+import { ExportImportResource } from './resources/export-import.js';
+import { GuardrailsResource } from './resources/guardrails.js';
 import { KnowledgeItemsResource } from './resources/knowledge-items.js';
 import { KnowledgeSourcesResource } from './resources/knowledge-sources.js';
+import { MemoriesResource } from './resources/memories.js';
+import { ScheduledAgentsResource } from './resources/scheduled-agents.js';
 import { TasksResource } from './resources/tasks.js';
 import { WorkflowsResource } from './resources/workflows.js';
 import type {
@@ -195,6 +201,15 @@ export class TbdAgentsClient {
 
   readonly health: HealthResource;
   readonly agents: CollectionResource<ResourceRecord>;
+  readonly chat: ChatResource;
+  readonly customTools: CustomToolsResource;
+  readonly custom_tools: CustomToolsResource;
+  readonly exportImport: ExportImportResource;
+  readonly export_import: ExportImportResource;
+  readonly guardrails: GuardrailsResource;
+  readonly memories: MemoriesResource;
+  readonly scheduledAgents: ScheduledAgentsResource;
+  readonly scheduled_agents: ScheduledAgentsResource;
   readonly skills: CollectionResource<ResourceRecord>;
   readonly mcps: CollectionResource<ResourceRecord>;
   readonly knowledgeSources: KnowledgeSourcesResource;
@@ -229,6 +244,15 @@ export class TbdAgentsClient {
 
     this.health = new HealthResource(this);
     this.agents = new CollectionResource(this, 'agents');
+    this.chat = new ChatResource(this);
+    this.customTools = new CustomToolsResource(this);
+    this.custom_tools = this.customTools;
+    this.exportImport = new ExportImportResource(this);
+    this.export_import = this.exportImport;
+    this.guardrails = new GuardrailsResource(this);
+    this.memories = new MemoriesResource(this);
+    this.scheduledAgents = new ScheduledAgentsResource(this);
+    this.scheduled_agents = this.scheduledAgents;
     this.skills = new CollectionResource(this, 'skills');
     this.mcps = new CollectionResource(this, 'mcps');
     this.knowledgeSources = new KnowledgeSourcesResource(this);

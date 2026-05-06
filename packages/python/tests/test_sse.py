@@ -51,3 +51,21 @@ def test_workflow_stream_parses_json_events() -> None:
     assert events[0].data == {"status": "running"}
     assert events[1].type == "message"
     assert events[1].data == {"content": "done"}
+
+
+def test_iter_sse_messages_parses_event_retry_and_trailing_flush() -> None:
+    lines = [
+        "event: update",
+        "id: 2",
+        "retry: not-a-number",
+        "data: first",
+        "data: second",
+    ]
+
+    messages = list(iter_sse_messages(lines))
+
+    assert len(messages) == 1
+    assert messages[0].event == "update"
+    assert messages[0].event_id == "2"
+    assert messages[0].retry is None
+    assert messages[0].data == "first\nsecond"

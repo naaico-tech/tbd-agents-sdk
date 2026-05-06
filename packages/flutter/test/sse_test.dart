@@ -85,8 +85,7 @@ void main() {
 
       expect(messages, hasLength(1));
       expect(messages[0].id, equals('1'));
-      expect(
-          messages[0].data, equals('{"id":1,\n"type":"status"}'));
+      expect(messages[0].data, equals('{"id":1,\n"type":"status"}'));
     });
 
     test('parses multiple events separated by blank lines', () {
@@ -123,8 +122,7 @@ void main() {
       expect(messages[0].data, equals(''));
     });
 
-    test(
-        'flushes remaining event at end-of-stream without trailing blank line',
+    test('flushes remaining event at end-of-stream without trailing blank line',
         () {
       final messages = iterSseMessages([
         'data: last',
@@ -197,8 +195,7 @@ void main() {
 
   // ── WorkflowsResource.stream integration ─────────────────────────────────
   group('WorkflowsResource.stream', () {
-    test('yields WorkflowStreamEvent objects parsed from SSE frames',
-        () async {
+    test('yields WorkflowStreamEvent objects parsed from SSE frames', () async {
       const ssePayload = ': keepalive\n\n'
           'id: 8\n'
           'data: {"id":8,"type":"status","data":{"status":"running"},'

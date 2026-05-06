@@ -9,12 +9,18 @@ from tbd_agents._utils import normalize_base_urls
 from tbd_agents.exceptions import ApiError, TransportError
 from tbd_agents.resources import (
     AgentsResource,
+    ChatResource,
+    CustomToolsResource,
+    ExportImportResource,
+    GuardrailsResource,
     HealthResource,
     KnowledgeItemsResource,
     KnowledgeSourcesResource,
     McpsResource,
+    MemoriesResource,
     ModelsResource,
     ProvidersResource,
+    ScheduledAgentsResource,
     SkillsResource,
     TasksResource,
     TokensResource,
@@ -60,6 +66,12 @@ class TbdAgentsClient:
 
         self.health = HealthResource(self)
         self.agents = AgentsResource(self)
+        self.chat = ChatResource(self)
+        self.custom_tools = CustomToolsResource(self)
+        self.export_import = ExportImportResource(self)
+        self.guardrails = GuardrailsResource(self)
+        self.memories = MemoriesResource(self)
+        self.scheduled_agents = ScheduledAgentsResource(self)
         self.skills = SkillsResource(self)
         self.mcps = McpsResource(self)
         self.knowledge_sources = KnowledgeSourcesResource(self)

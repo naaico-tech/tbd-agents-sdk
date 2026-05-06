@@ -9,12 +9,18 @@ import 'package:http/http.dart' as http;
 import 'exceptions.dart';
 import 'utils.dart';
 import 'resources/agents.dart';
+import 'resources/chat.dart';
+import 'resources/custom_tools.dart';
+import 'resources/export_import.dart';
+import 'resources/guardrails.dart';
 import 'resources/health.dart';
 import 'resources/knowledge_items.dart';
 import 'resources/knowledge_sources.dart';
 import 'resources/mcps.dart';
+import 'resources/memories.dart';
 import 'resources/models_resource.dart';
 import 'resources/providers.dart';
+import 'resources/scheduled_agents.dart';
 import 'resources/skills.dart';
 import 'resources/tasks.dart';
 import 'resources/tokens.dart';
@@ -115,6 +121,12 @@ class TbdAgentsClient {
     // Attach resource helpers.
     health = HealthResource(this);
     agents = AgentsResource(this);
+    chat = ChatResource(this);
+    customTools = CustomToolsResource(this);
+    exportImport = ExportImportResource(this);
+    guardrails = GuardrailsResource(this);
+    memories = MemoriesResource(this);
+    scheduledAgents = ScheduledAgentsResource(this);
     skills = SkillsResource(this);
     mcps = McpsResource(this);
     knowledgeSources = KnowledgeSourcesResource(this);
@@ -140,6 +152,24 @@ class TbdAgentsClient {
 
   late final HealthResource health;
   late final AgentsResource agents;
+  late final ChatResource chat;
+  late final CustomToolsResource customTools;
+
+  /// Snake-case alias for [customTools].
+  CustomToolsResource get custom_tools => customTools;
+
+  late final ExportImportResource exportImport;
+
+  /// Snake-case alias for [exportImport].
+  ExportImportResource get export_import => exportImport;
+
+  late final GuardrailsResource guardrails;
+  late final MemoriesResource memories;
+  late final ScheduledAgentsResource scheduledAgents;
+
+  /// Snake-case alias for [scheduledAgents].
+  ScheduledAgentsResource get scheduled_agents => scheduledAgents;
+
   late final SkillsResource skills;
   late final McpsResource mcps;
   late final KnowledgeSourcesResource knowledgeSources;
