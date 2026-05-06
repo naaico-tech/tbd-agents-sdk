@@ -88,7 +88,7 @@ function isJsonSerializable(value: unknown): value is JsonValue {
     case 'string':
       return true;
     case 'object':
-      return !isBlob(value) && !isFormData(value) && !isUrlSearchParams(value) && !isArrayBufferView(value) && !(value instanceof ArrayBuffer);
+      return !isBlob(value) && !isFormData(value) && !isUrlSearchParams(value) && !isArrayBufferView(value) && !(value instanceof ArrayBuffer) && !(value instanceof Map) && !(value instanceof Set);
     default:
       return false;
   }

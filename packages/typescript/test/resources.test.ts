@@ -65,8 +65,10 @@ describe('resource helpers', () => {
       },
     );
 
+    // Attach the rejection handler before advancing timers to prevent unhandled rejections
+    const assertion = expect(promise).rejects.toThrow('Polling timed out after 20ms');
     await vi.advanceTimersByTimeAsync(30);
-    await expect(promise).rejects.toThrow('Polling timed out after 20ms');
+    await assertion;
 
     vi.useRealTimers();
   });
@@ -204,6 +206,7 @@ describe('resource endpoints', () => {
       .mockResolvedValueOnce({ id: 'task-1', status: 'queued', workflow_id: 'wf-1' })
       .mockResolvedValueOnce({ id: 'task-1', percent_complete: 10 })
       .mockResolvedValueOnce({ id: 'task-1', status: 'running', workflow_id: 'wf-1' })
+      .mockResolvedValueOnce({ id: 'task-1', status: 'completed', workflow_id: 'wf-1' })
       .mockResolvedValueOnce({ id: 'task-1', status: 'completed', workflow_id: 'wf-1' });
 
     await knowledgeSources.test('source/id');
